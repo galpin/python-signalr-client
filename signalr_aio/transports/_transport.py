@@ -14,7 +14,7 @@ except NameError:
 
 # -----------------------------------
 # Internal Imports
-from ._exceptions import ConnectionClosed
+from ._exceptions import ClientConnectionError
 from ._parameters import WebSocketParameters
 from ._queue_events import InvokeEvent, CloseEvent
 

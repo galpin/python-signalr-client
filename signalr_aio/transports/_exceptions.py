@@ -1,1 +1,1 @@
-from websockets.exceptions import ConnectionClosed
+from aiohttp.client_exceptions import ClientConnectionError
