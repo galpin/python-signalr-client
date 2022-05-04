@@ -5,6 +5,8 @@
 # Stanislav Lazarov
 
 # python compatiblity for <3.6
+import logging
+
 import aiohttp
 
 try:
@@ -74,10 +76,14 @@ class Transport:
         self._conn_handler = asyncio.ensure_future(self._socket(self.ws_loop), loop=self.ws_loop)
 
     async def _socket(self, loop):
-        async with aiohttp.ClientSession(loop=loop) as self.session:
-            async with self.session.ws_connect(self._ws_params.socket_url, headers=self._ws_params.headers) as self.ws:
-                self._connection.started = True
-                await self._master_handler(self.ws)
+        try:
+            async with aiohttp.ClientSession(loop=loop) as self.session:
+                async with self.session.ws_connect(self._ws_params.socket_url, headers=self._ws_params.headers) as self.ws:
+                    self._connection.started = True
+                    await self._master_handler(self.ws)
+        except Exception as e:
+            logging.exception('Failed to establish websocket connection', exc_info=e)
+            raise e
 
     async def _master_handler(self, ws):
         consumer_task = asyncio.ensure_future(self._consumer_handler(ws), loop=self.ws_loop)
