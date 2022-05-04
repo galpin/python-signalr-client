@@ -5,6 +5,8 @@
 # Stanislav Lazarov
 
 # python compatiblity for <3.6
+import aiohttp
+
 try:
     ModuleNotFoundError
 except NameError:
@@ -22,7 +24,6 @@ try:
     from ujson import dumps, loads
 except ModuleNotFoundError:
     from json import dumps, loads
-import websockets
 import asyncio
 
 try:
@@ -73,10 +74,10 @@ class Transport:
         self._conn_handler = asyncio.ensure_future(self._socket(self.ws_loop), loop=self.ws_loop)
 
     async def _socket(self, loop):
-        async with websockets.connect(self._ws_params.socket_url, extra_headers=self._ws_params.headers,
-                                      loop=loop) as self.ws:
-            self._connection.started = True
-            await self._master_handler(self.ws)
+        async with aiohttp.ClientSession(loop=loop) as self.session:
+            async with self.session.ws_connect(self._ws_params.socket_url, headers=self._ws_params.headers) as self.ws:
+                self._connection.started = True
+                await self._master_handler(self.ws)
 
     async def _master_handler(self, ws):
         consumer_task = asyncio.ensure_future(self._consumer_handler(ws), loop=self.ws_loop)
@@ -89,7 +90,7 @@ class Transport:
 
     async def _consumer_handler(self, ws):
         while True:
-            message = await ws.recv()
+            message = await ws.receive_str()
             if len(message) > 0:
                 data = loads(message)
                 await self._connection.received.fire(**data)
@@ -100,7 +101,7 @@ class Transport:
                 event = await self.invoke_queue.get()
                 if event is not None:
                     if event.type == 'INVOKE':
-                        await ws.send(dumps(event.message))
+                        await ws.send_bytes(dumps(event.message))
                     elif event.type == 'CLOSE':
                         await ws.close()
                         while ws.open is True:
