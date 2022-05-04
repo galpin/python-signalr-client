@@ -6,6 +6,7 @@
 
 # python compatiblity for <3.6
 import logging
+import os
 
 import aiohttp
 
@@ -78,7 +79,9 @@ class Transport:
     async def _socket(self, loop):
         try:
             async with aiohttp.ClientSession(loop=loop) as self.session:
-                async with self.session.ws_connect(self._ws_params.socket_url, headers=self._ws_params.headers) as self.ws:
+                async with self.session.ws_connect(self._ws_params.socket_url,
+                                                   headers=self._ws_params.headers,
+                                                   proxy=self._get_http_proxy()) as self.ws:
                     self._connection.started = True
                     await self._master_handler(self.ws)
         except Exception as e:
@@ -120,3 +123,7 @@ class Transport:
                 self.invoke_queue.task_done()
             except Exception as e:
                 raise e
+
+    @staticmethod
+    def _get_http_proxy():
+        return os.environ.get('HTTP_PROXY')
