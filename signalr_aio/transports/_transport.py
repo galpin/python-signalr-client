@@ -99,6 +99,7 @@ class Transport:
     async def _consumer_handler(self, ws):
         while True:
             message = await ws.receive_str()
+            logging.debug('received: %s', message)
             if len(message) > 0:
                 data = loads(message)
                 await self._connection.received.fire(**data)
