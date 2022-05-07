@@ -110,7 +110,7 @@ class Transport:
                 event = await self.invoke_queue.get()
                 if event is not None:
                     if event.type == 'INVOKE':
-                        await ws.send_bytes(dumps(event.message))
+                        await ws.send_str(dumps(event.message))
                     elif event.type == 'CLOSE':
                         await ws.close()
                         while ws.open is True:
